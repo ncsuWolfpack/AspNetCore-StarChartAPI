@@ -40,7 +40,7 @@ namespace StarChart.Controllers
             }
         }
 
-        [HttpGet("{name}", Name ="GetByName")]
+        [HttpGet("{name}", Name = "GetByName")]
         public IActionResult GetByName(string name)
         {
             var query = from co in _context.CelestialObjects
@@ -80,6 +80,87 @@ namespace StarChart.Controllers
                 }
 
                 return Ok(celestialObjects);
+            }
+            else
+            {
+                return NotFound();
+            }
+        }
+
+        [HttpPost(Name = "Create")]
+        public IActionResult Create([FromBody]CelestialObject celestialObject)
+        {
+            _context.CelestialObjects.Add(celestialObject);
+            _context.SaveChanges();
+
+            return CreatedAtRoute("GetById", new { celestialObject.Id }, celestialObject);
+        }
+
+        [HttpPut("{id}", Name = "Update")]
+        public IActionResult Update(int id, CelestialObject celestialObject)
+        {
+            var query = from co in _context.CelestialObjects
+                        where co.Id == id
+                        select co;
+
+            var modelObject = query.SingleOrDefault();
+
+            if (modelObject == null)
+            {
+                return NotFound();
+            }
+            else
+            {
+                modelObject.Name = celestialObject.Name;
+                modelObject.OrbitalPeriod = celestialObject.OrbitalPeriod;
+                modelObject.OrbitedObjectId = celestialObject.OrbitedObjectId;
+
+                _context.Update(modelObject);
+                _context.SaveChanges();
+
+                return NoContent();
+            }
+        }
+
+        [HttpPatch("{id}/{name}", Name = "RenameObject")]
+        public IActionResult RenameObject(int id, string name)
+        {
+            var query = from co in _context.CelestialObjects
+                        where co.Id == id
+                        select co;
+
+            var modelObject = query.SingleOrDefault();
+
+            if (modelObject == null)
+            {
+                return NotFound();
+            }
+            else
+            {
+                modelObject.Name = name;
+
+                _context.Update(modelObject);
+                _context.SaveChanges();
+
+                return NoContent();
+            }
+        }
+
+        [HttpDelete("{id}", Name ="Delete")]
+        public IActionResult Delete(int id)
+        {
+            var query = from co in _context.CelestialObjects
+                        where co.Id == id || co.OrbitedObjectId == id
+                        select co;
+
+            var objectsToDelete = query.ToList();
+
+            if (objectsToDelete.Any())
+            {
+                _context.RemoveRange(objectsToDelete);
+                _context.SaveChanges();
+
+                return NoContent();
             }
             else
             {
